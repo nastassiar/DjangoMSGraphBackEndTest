@@ -26,25 +26,29 @@ def access(request, format=None):
     Returns whether or not the current user has access to the API 
     """
     if request.method == 'GET':
-        API_key = request.META.get('Authorization') # the value is null
-        if (API_key) :
-           response = check_member_group(API_key)
-           return JsonResponse(response)
+        API_key = request.META.get('HTTP_AUTHORIZATION') # the value is null
+        if (API_key) : 
+            response = JsonResponse({'Response':'false','Message':'Oh no something went wrong!'}, status=500)
+            r = check_member_group(API_key)
+            # If there is an error something went wrong :(
+            # I'm not returning the status code from the request that could be an easier way to check if something went wrong
+            if (r.get('error')) :
+                err = str('Looks like something went wrong!: ')+ str(r.get('error').get('code'))
+                response = JsonResponse({'Response':'false','Message': err }, status=401)
+            else :
+                # This is a list of Group info
+                response = JsonResponse({'Response':'false','Message': 'No! You do not have access to the application!' }, status=200)
+                if (r.get('value')) :
+                    for v in r.get('value'):
+                        id = v.get('id')
+                        if (id == 'bb648d5d-fd18-4f49-aa4a-ca1cf1f66caf') :
+                            response = JsonResponse({'Response':'true','Message': 'Yes! You have access to the application!' }, status=200)
+                #response = JsonResponse(r)
+            return response
         else:
-            response = check_member_group(API_key)
-            #message = 'No Authorization Token supplied' 
-            #response = JsonResponse({'status':'false','message':message}, status=404)
-            return JsonResponse(response)
-
-
-@api_view(['GET'])
-def token(request, format=None):
-    """
-    Return the token if it was supplied
-    """
-    if request.method == 'GET':
-        API_key = request.META.get('Authorization') # the value is null
-        return Response({'API_key': API_key})
+            message = 'No Authorization Token supplied!' 
+            response = JsonResponse({'Response':'false','Message': message}, status=401)
+            return response
 
 
 # Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See full license at the bottom of this file.
@@ -69,7 +73,8 @@ verifySSL = True
 def make_api_call(method, url, token, payload = None):
     # Send these headers with all API calls
     headers = { 'User-Agent' : 'pythoncontacts/1.2',
-                'Authorization' : 'Bearer {0}'.format(token),
+                # Note: Make sure Bearer is appended to the front of the token. Otherwise i should be added here
+                'Authorization' : '{0}'.format(token),
                 'Accept' : 'application/json' }
                 
     # Use these headers to instrument calls. Makes it easier
