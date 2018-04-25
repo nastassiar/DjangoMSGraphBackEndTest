@@ -25,7 +25,7 @@ SECRET_KEY = ')wptsi1k+o8(=#v1o*s)wwsivvq@$6bwa6b88=c2b4*@xoemz4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [*]
 
 
 # Application definition
