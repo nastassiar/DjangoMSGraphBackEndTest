@@ -6,6 +6,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 
+
+# An echo API Just for testing 
 @api_view(['GET', 'PUT'])
 def echo(request, format=None):
     """
@@ -20,6 +22,7 @@ def echo(request, format=None):
             return Response('Nothing supplied to Echo', status=status.HTTP_400_BAD_REQUEST)
         return Response(data)
 
+# This is the endpoint that matters
 @api_view(['GET'])
 def access(request, format=None):
     """
@@ -27,8 +30,11 @@ def access(request, format=None):
     """
     if request.method == 'GET':
         API_key = request.META.get('HTTP_AUTHORIZATION') # the value is null
+        # If there isn't an Auth token no point in calling the endpoint
         if (API_key) : 
+            # Default to error response
             response = JsonResponse({'Response':'false','Message':'Oh no something went wrong!'}, status=500)
+            # Call the Graph API
             r = check_member_group(API_key)
             # If there is an error something went wrong :(
             # I'm not returning the status code from the request that could be an easier way to check if something went wrong
@@ -36,14 +42,15 @@ def access(request, format=None):
                 err = str('Looks like something went wrong!: ')+ str(r.get('error').get('code'))
                 response = JsonResponse({'Response':'false','Message': err }, status=401)
             else :
-                # This is a list of Group info
+                # Response returned without an error so either you have access or you don't
                 response = JsonResponse({'Response':'false','Message': 'No! You do not have access to the application!' }, status=200)
                 if (r.get('value')) :
                     for v in r.get('value'):
                         id = v.get('id')
+                        # Check if the group 'App Access' exists in the users list of groups
+                        # GROUP ID
                         if (id == 'bb648d5d-fd18-4f49-aa4a-ca1cf1f66caf') :
                             response = JsonResponse({'Response':'true','Message': 'Yes! You have access to the application!' }, status=200)
-                #response = JsonResponse(r)
             return response
         else:
             message = 'No Authorization Token supplied!' 
